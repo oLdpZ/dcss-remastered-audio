@@ -11,6 +11,7 @@ os.makedirs(OUT, exist_ok=True)
 
 # nome file (branch) -> tracce candidate (ordine di preferenza). Piu' candidati = piu' robusto ai 404.
 CANDIDATES = {
+    "menu":    ["The Path of the Goblin King", "Crossing the Chasm", "Mystery Bazaar", "Dragon and Toast"],
     "dungeon": ["Long Note Two", "Long Note Four", "Deep Haze"],
     "temple":  ["Meditation Impromptu 01", "Meditation Impromptu 02", "Peace of Mind 3"],
     "lair":    ["Chee Zee Cave", "Chee Zee Jungle", "Rites"],

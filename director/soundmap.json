@@ -1,4 +1,5 @@
 {
+  "menu": {"file": "menu.mp3", "volume": 0.5},
   "sfx": {
     "evt__melee_hit": {"files": ["evt__melee_hit.wav", "evt__melee_hit2.wav", "evt__melee_hit3.wav"], "volume": 0.8, "group": "combat"},
     "evt__ranged":    {"files": ["evt__ranged.wav"], "volume": 0.8, "group": "combat"},

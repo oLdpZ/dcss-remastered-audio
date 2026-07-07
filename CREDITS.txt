@@ -8,6 +8,7 @@ Licensed under Creative Commons: By Attribution 4.0 License
 https://creativecommons.org/licenses/by/4.0/
 
 Tracce usate (branch -> traccia):
+  Menu principale -> The Path of the Goblin King
   Dungeon        -> Long Note Two
   Temple         -> Meditation Impromptu 01
   Lair           -> Chee Zee Cave

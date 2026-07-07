@@ -16,6 +16,13 @@ def main():
         sfx_files.extend(entry.get("files", []))
     engine.prewarm("sfx", sfx_files)
 
+    # Musica del menu principale: parte all'avvio (il Director parte prima del gioco);
+    # il primo cambio di branch in gioco fara' il crossfade al tema della zona.
+    menu = soundmap.get("menu")
+    if menu:
+        engine.play_music(menu["file"], menu.get("volume", 0.5))
+        print("[director] musica menu:", menu["file"])
+
     print("[director] pronto. In ascolto su \\\\.\\pipe\\dcss_audio")
 
     def handle(raw):
