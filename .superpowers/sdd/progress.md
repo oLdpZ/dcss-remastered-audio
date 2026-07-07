@@ -14,3 +14,4 @@ IMPORTANT: (3) WriteFile bloccante + load Sound non in cache sull'hot path -> ri
 Fix in corso via subagent. Accettati/minori: #5 (globals C, single-thread ok), #7-#10 (edge).
 Fix robustezza (review finale): complete (commit 0f470a5) — pipe lifecycle robusto, isolamento eccezioni, prewarm SFX, duck su entrambi i canali. Test 6/6.
 Fase 4 (musica 22 branch + SFX veri sintetizzati): complete.
+Extra confermati in-game: musica menu, suoni porte (apri/chiudi), fix riavvio musica dopo morte. PROGETTO COMPLETO.
