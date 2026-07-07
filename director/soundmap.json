@@ -1,0 +1,16 @@
+{
+  "sfx": {
+    "evt__melee_hit": {"files": ["evt__melee_hit.wav"], "volume": 0.8, "group": "combat"},
+    "evt__ranged":    {"files": ["evt__ranged.wav"], "volume": 0.8, "group": "combat"},
+    "evt__cast_spell":{"files": ["evt__cast_spell.wav"], "volume": 0.8, "group": "magic"},
+    "evt__quaff":     {"files": ["evt__quaff.wav"], "volume": 0.7, "group": "item"},
+    "evt__read":      {"files": ["evt__read.wav"], "volume": 0.7, "group": "item"},
+    "evt__pickup":    {"files": ["evt__pickup.wav"], "volume": 0.6, "group": "item"},
+    "evt__spot":      {"files": ["evt__spot.wav"], "volume": 0.6, "group": "combat"},
+    "evt__kill":      {"files": ["evt__kill.wav"], "volume": 0.8, "group": "combat"},
+    "evt__level_up":  {"files": ["evt__level_up.wav"], "volume": 1.0, "group": "jingle", "duck": true}
+  },
+  "music": {},
+  "control": {"state__hp_low": {"op": "duck", "volume": 0.3},
+              "state__player_death": {"op": "stop_music"}}
+}
