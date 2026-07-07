@@ -1,2 +1,4 @@
-pygame>=2.5
+# pygame-ce: fork drop-in di pygame con wheel per Python 3.14 (stesso namespace "import pygame").
+# Il pygame upstream non ha wheel cp314 e fallisce la build da sorgente.
+pygame-ce>=2.5
 pywin32>=306

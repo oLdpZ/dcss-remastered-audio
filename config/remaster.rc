@@ -1,0 +1,22 @@
+# === DCSS Remastered Audio ===
+sounds_on = true
+sound_file_path = remaster/audio/sfx/
+# --- eventi istantanei (SFX) ---
+sound += You hit:evt__melee_hit.wav
+sound += You bite:evt__melee_hit.wav
+sound += You claw:evt__melee_hit.wav
+sound += You shoot:evt__ranged.wav
+sound += You throw:evt__ranged.wav
+sound += You cast:evt__cast_spell.wav
+sound += You drink:evt__quaff.wav
+sound += You read:evt__read.wav
+sound += You now have:evt__pickup.wav
+sound += You kill:evt__kill.wav
+sound += is now dead:evt__kill.wav
+sound += comes into view:evt__spot.wav
+# --- level up: regex candidate (NIENTE virgole/due-punti nelle regex!), da confermare dal log ---
+sound += are now a level:evt__level_up.wav
+sound += experience level:evt__level_up.wav
+sound += reach.*level:evt__level_up.wav
+# --- HP basso: regex predefinita del motore ---
+sound += LOW HITPOINT WARNING:evt__hp_low.wav
