@@ -2,7 +2,7 @@ import wave, struct, os
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.abspath(os.path.join(HERE, "..", "audio", "markers"))
 os.makedirs(OUT, exist_ok=True)
-branches = ["D","Temple","Orc","Lair","Swamp","Shoals","Snake","Spider","Slime",
+branches = ["D","Temple","Orc","Elf","Lair","Swamp","Shoals","Snake","Spider","Slime",
             "Vaults","Crypt","Tomb","Depths","Zot","Hell","Dis","Geh","Coc","Tar",
             "Abyss","Pan","Sewer","Ossuary","Bailey","IceCv","Volcano","WizLab"]
 tokens = ["state__branch_" + b for b in branches] + ["state__hp_low", "state__hp_ok", "state__player_death"]
