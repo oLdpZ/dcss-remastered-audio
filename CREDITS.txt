@@ -1,0 +1,20 @@
+DCSS Remastered Audio — Crediti asset
+=====================================
+
+MUSICA
+------
+Music by Kevin MacLeod (incompetech.com)
+Licensed under Creative Commons: By Attribution 4.0 License
+https://creativecommons.org/licenses/by/4.0/
+
+Tracce usate:
+- Long Note Two          (branch: Dungeon)
+- Meditation Impromptu 01 (branch: Temple)
+- Chee Zee Cave          (branch: Lair)
+- Crusade                (branch: Orcish Mines)
+- Ghost Processional     (branch: Crypt)
+- The Descent            (branch: Depths)
+
+EFFETTI SONORI
+--------------
+(attualmente segnaposto generati — da sostituire con asset royalty-free)
