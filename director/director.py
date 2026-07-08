@@ -2,6 +2,8 @@ import json, os, sys
 from router import path_to_token, Router
 from audio_engine import AudioEngine
 from pipe_server import PipeServer
+from visual_router import VisualRouter
+from gfx_state import GfxShmem
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 AUDIO_ROOT = os.path.join(HERE, "..", "audio")
@@ -10,6 +12,12 @@ def main():
     soundmap = json.load(open(os.path.join(HERE, "soundmap.json"), encoding="utf-8"))
     router = Router(soundmap)
     engine = AudioEngine(os.path.abspath(AUDIO_ROOT))
+
+    visualmap = json.load(open(os.path.join(HERE, "visualmap.json"), encoding="utf-8"))
+    vrouter = VisualRouter(visualmap)
+    shm = GfxShmem()
+    shm.open()
+    shm.write(vrouter.state)
 
     sfx_files = []
     for entry in soundmap.get("sfx", {}).values():
@@ -36,6 +44,8 @@ def main():
             elif op == "duck":  engine.duck(a["volume"])
             elif op == "unduck":engine.unduck()
             elif op == "stop_music": engine.stop_music()
+        if vrouter.route(token):
+            shm.write(vrouter.state)
         sys.stdout.flush()
 
     def on_disconnect():

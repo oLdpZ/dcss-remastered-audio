@@ -60,6 +60,12 @@ static int g_ready = -1;   /* -1 unknown, 0 failed, 1 ok */
 static GLuint g_prog = 0, g_tex = 0;
 static GLint u_tint, u_strength, u_desat, u_vignette, u_res, u_tex;
 
+/* Crossfade: valori "correnti" che rincorrono il target dello stato condiviso
+   con un lerp per frame (k=0.08 ~= 1s a 60fps), cosi' i grade non scattano. */
+static float cur_tint[3] = {0.0f, 0.0f, 0.0f};
+static float cur_strength = 0.0f, cur_desat = 0.0f, cur_vignette = 0.0f;
+static float lerp(float a, float b, float k) { return a + (b - a) * k; }
+
 #define LOAD(var,type,name) var=(type)wglGetProcAddress(name); if(!var) return 0;
 
 static int load_entrypoints(void) {
@@ -133,12 +139,22 @@ void pp_draw(const GfxState *st, int w, int h) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, w, h, 0);
 
+    {
+        float k = 0.08f;   /* ~1s di crossfade a 60fps */
+        cur_tint[0] = lerp(cur_tint[0], st->tint_r, k);
+        cur_tint[1] = lerp(cur_tint[1], st->tint_g, k);
+        cur_tint[2] = lerp(cur_tint[2], st->tint_b, k);
+        cur_strength = lerp(cur_strength, st->grade_strength * mi, k);
+        cur_desat = lerp(cur_desat, st->desaturate * mi, k);
+        cur_vignette = lerp(cur_vignette, st->vignette * mi, k);
+    }
+
     pglUseProgram(g_prog);
     pglUniform1i(u_tex, 0);
-    pglUniform3f(u_tint, st->tint_r, st->tint_g, st->tint_b);
-    pglUniform1f(u_strength, st->grade_strength * mi);
-    pglUniform1f(u_desat, st->desaturate * mi);
-    pglUniform1f(u_vignette, st->vignette * mi);
+    pglUniform3f(u_tint, cur_tint[0], cur_tint[1], cur_tint[2]);
+    pglUniform1f(u_strength, cur_strength);
+    pglUniform1f(u_desat, cur_desat);
+    pglUniform1f(u_vignette, cur_vignette);
     pglUniform2f(u_res, (float)w, (float)h);
 
     glBegin(GL_QUADS);
