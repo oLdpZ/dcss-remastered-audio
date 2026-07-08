@@ -5,7 +5,14 @@ from pipe_server import PipeServer
 from visual_router import VisualRouter
 from gfx_state import GfxShmem
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+# Cartella base: quando il Director e' congelato in .exe (PyInstaller), __file__ punta
+# a una dir temporanea di estrazione, quindi usiamo la cartella dell'eseguibile; da
+# sorgente usiamo la cartella dello script. In entrambi i casi soundmap.json/visualmap.json
+# e ../audio stanno accanto a questo path.
+if getattr(sys, "frozen", False):
+    HERE = os.path.dirname(os.path.abspath(sys.executable))
+else:
+    HERE = os.path.dirname(os.path.abspath(__file__))
 AUDIO_ROOT = os.path.join(HERE, "..", "audio")
 
 # Log su file: il Director gira con finestra nascosta, quindi lo stdout non si vede.

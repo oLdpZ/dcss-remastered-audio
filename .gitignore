@@ -5,6 +5,11 @@ audio/ambience/*
 audio/markers/*.wav
 __pycache__/
 director/director.log
+# artefatti packaging/freezing (PyInstaller) e release
+director/director.exe
+director/build/
+dist/
+*.spec
 *.obj
 *.exp
 *.lib
