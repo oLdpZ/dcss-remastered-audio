@@ -39,6 +39,9 @@ static PFNGLGETSHADERIV    pglGetShaderiv;
 #ifndef GL_COMPILE_STATUS
 #define GL_COMPILE_STATUS  0x8B81
 #endif
+#ifndef GL_CLAMP_TO_EDGE
+#define GL_CLAMP_TO_EDGE   0x812F
+#endif
 
 static const char *FRAG_SRC =
 "uniform sampler2D tex;\n"
@@ -50,7 +53,7 @@ static const char *FRAG_SRC =
 "uniform vec3 bloom_c; uniform float bloom_i;\n"
 "void main(){\n"
 "  vec2 uv = gl_FragCoord.xy / res;\n"
-"  vec2 uv2 = (uv - 0.5) * (1.0 - 0.03*shake) + 0.5 + shake_off;\n"
+"  vec2 uv2 = (uv - 0.5) * (1.0 - 0.05*shake) + 0.5 + shake_off;\n"
 "  vec3 c = texture2D(tex, uv2).rgb;\n"
 "  float l = dot(c, vec3(0.299,0.587,0.114));\n"
 "  c = mix(c, vec3(l), desat);\n"
@@ -197,6 +200,8 @@ void pp_draw(const GfxState *st, int w, int h) {
     glBindTexture(GL_TEXTURE_2D, g_tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, w, h, 0);
 
     {
@@ -212,8 +217,8 @@ void pp_draw(const GfxState *st, int w, int h) {
     /* Offset di shake: jitter per-frame usando il perf-counter come fase
        (deterministico rispetto al tempo, non serve rand()). */
     float shake_phase = (float)(g_last.QuadPart % 1000000) * 0.001f;
-    float sx = env_shake * 0.02f * sinf(shake_phase * 13.0f);
-    float sy = env_shake * 0.02f * cosf(shake_phase * 17.0f);
+    float sx = env_shake * mi * 0.02f * sinf(shake_phase * 13.0f);
+    float sy = env_shake * mi * 0.02f * cosf(shake_phase * 17.0f);
 
     pglUseProgram(g_prog);
     pglUniform1i(u_tex, 0);
