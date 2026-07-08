@@ -1,0 +1,29 @@
+DCSS Remastered — Come giocare
+==============================
+
+1) Se hai scaricato uno ZIP: PRIMA di estrarre, tasto destro sullo ZIP ->
+   Proprieta' -> in basso spunta "Annulla blocco" (Unblock) -> OK.
+   (Windows blocca i file scaricati; questo passo evita errori.)
+
+2) Estrai la cartella dove vuoi (es. Desktop). NON serve installare nulla.
+
+3) Doppio clic su:  "> Gioca a DCSS Remastered.bat"
+
+Al primo avvio Windows potrebbe mostrare "Windows ha protetto il tuo PC"
+(SmartScreen). E' normale per i programmi senza firma digitale:
+   -> clic su "Ulteriori info" -> "Esegui comunque".
+
+Se l'antivirus (Windows Defender) segnala i file winmm.dll / opengl32.dll:
+sono i componenti che aggiungono audio e grafica al gioco (falso positivo
+comune per questo tipo di add-on). Puoi aggiungere la cartella alle
+esclusioni di Defender:
+   Sicurezza di Windows -> Protezione da virus e minacce ->
+   Gestisci impostazioni -> Esclusioni -> Aggiungi o rimuovi esclusioni ->
+   Aggiungi una cartella.
+
+Non serve Python ne' altro: e' tutto incluso.
+
+Crediti musica e licenze: vedi CREDITS.txt e la cartella LICENSES.
+Progetto: https://github.com/oLdpZ/dcss-remastered
+
+Buon divertimento!

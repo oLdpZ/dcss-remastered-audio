@@ -1,0 +1,18 @@
+DCSS Remastered — nota licenze
+==============================
+
+Questo pacchetto include Dungeon Crawl Stone Soup (Tiles 0.34), rilasciato
+sotto GNU General Public License (GPL). Il codice sorgente del gioco e'
+disponibile su: https://github.com/crawl/crawl  (tag 0.34.x).
+
+Il layer "Remastered" (proxy audio/grafica + Director) e' un add-on
+indipendente e ha il suo repository:
+https://github.com/oLdpZ/dcss-remastered
+
+Musica: Kevin MacLeod (incompetech.com), licenza Creative Commons BY.
+Attribuzione completa in CREDITS.txt. Effetti sonori: sintetizzati (CC0).
+
+winmm.dll e opengl32.dll in questa cartella sono i PROXY del progetto, NON
+componenti Microsoft. Le versioni di sistema (winmm_orig.dll /
+opengl32_orig.dll) vengono create dal launcher copiandole dal TUO Windows
+al primo avvio: non vengono ridistribuite in questo pacchetto.
