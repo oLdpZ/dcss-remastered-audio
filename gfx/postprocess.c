@@ -57,6 +57,7 @@ static const char *FRAG_SRC =
 "uniform float shake; uniform vec2 shake_off;\n"
 "uniform vec3 bloom_c; uniform float bloom_i;\n"
 "uniform vec3 vig_tint; uniform float fade;\n"
+"uniform float bloom_base;\n"
 "void main(){\n"
 "  vec2 uv = gl_FragCoord.xy / res;\n"
 "  vec2 uv2 = (uv - 0.5) * (1.0 - 0.05*shake) + 0.5 + shake_off;\n"
@@ -69,6 +70,7 @@ static const char *FRAG_SRC =
 "  float d = distance(uv, vec2(0.5));\n"
 "  float vg = vignette * smoothstep(0.35, 0.75, d);\n"
 "  c = mix(c, vig_tint, vg);\n"
+"  c += c * bloom_base * smoothstep(0.5, 1.0, l);\n"
 "  c = mix(c, vec3(0.0), fade);\n"
 "  gl_FragColor = vec4(c, 1.0);\n"
 "}\n";
@@ -85,6 +87,7 @@ static GLuint g_prog = 0, g_tex = 0;
 static GLint u_tint, u_strength, u_desat, u_vignette, u_res, u_tex;
 static GLint u_flash, u_flash_i, u_shake, u_shake_off, u_bloom_c, u_bloom_i;
 static GLint u_vig_tint, u_fade;
+static GLint u_bloom_base;
 
 /* --- Envelope / dt tracking per la "juice" degli eventi (Task 8) --- */
 static LARGE_INTEGER g_freq, g_last; static int g_clock = 0;
@@ -118,6 +121,7 @@ static float cur_tint[3] = {0.0f, 0.0f, 0.0f};
 static float cur_strength = 0.0f, cur_desat = 0.0f, cur_vignette = 0.0f;
 static float cur_vig_tint[3] = {0.0f, 0.0f, 0.0f};
 static float cur_fade = 0.0f;
+static float cur_bloom_base = 0.0f;
 static float g_time = 0.0f;   /* accumulatore tempo per le modulazioni sinusoidali (Task 9) */
 static float lerp(float a, float b, float k) { return a + (b - a) * k; }
 
@@ -179,6 +183,7 @@ int pp_init(void) {
     u_bloom_i = pglGetUniformLocation(g_prog, "bloom_i");
     u_vig_tint = pglGetUniformLocation(g_prog, "vig_tint");
     u_fade = pglGetUniformLocation(g_prog, "fade");
+    u_bloom_base = pglGetUniformLocation(g_prog, "bloom_base");
     pglUseProgram(0);
 
     glGenTextures(1, &g_tex);
@@ -243,6 +248,7 @@ void pp_draw(const GfxState *st, int w, int h) {
         cur_vig_tint[1] = lerp(cur_vig_tint[1], st->vignette_tint_g, k);
         cur_vig_tint[2] = lerp(cur_vig_tint[2], st->vignette_tint_b, k);
         cur_fade = lerp(cur_fade, st->fade_black, k);
+        cur_bloom_base = lerp(cur_bloom_base, st->bloom_base * mi, k);
     }
 
     /* Modulazioni sinusoidali "danger signal" (Task 9): instabilita' di
@@ -274,6 +280,7 @@ void pp_draw(const GfxState *st, int w, int h) {
     pglUniform1f(u_bloom_i, env_bloom * mi);
     pglUniform3f(u_vig_tint, cur_vig_tint[0], cur_vig_tint[1], cur_vig_tint[2]);
     pglUniform1f(u_fade, cur_fade);
+    pglUniform1f(u_bloom_base, cur_bloom_base);
 
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0); glVertex2f(0, 0);

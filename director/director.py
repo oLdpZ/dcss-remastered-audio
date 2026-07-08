@@ -13,11 +13,14 @@ def main():
     router = Router(soundmap)
     engine = AudioEngine(os.path.abspath(AUDIO_ROOT))
 
-    visualmap = json.load(open(os.path.join(HERE, "visualmap.json"), encoding="utf-8"))
-    vrouter = VisualRouter(visualmap)
-    shm = GfxShmem()
-    shm.open()
-    shm.write(vrouter.state)
+    try:
+        visualmap = json.load(open(os.path.join(HERE, "visualmap.json"), encoding="utf-8"))
+        vrouter = VisualRouter(visualmap)
+        shm = GfxShmem(); shm.open(); shm.write(vrouter.state)
+        gfx_ok = True
+    except Exception as e:
+        print("[director] layer grafico disattivato (audio prosegue):", e)
+        vrouter = None; shm = None; gfx_ok = False
 
     sfx_files = []
     for entry in soundmap.get("sfx", {}).values():
@@ -44,7 +47,7 @@ def main():
             elif op == "duck":  engine.duck(a["volume"])
             elif op == "unduck":engine.unduck()
             elif op == "stop_music": engine.stop_music()
-        if vrouter.route(token):
+        if gfx_ok and vrouter.route(token):
             shm.write(vrouter.state)
         sys.stdout.flush()
 
