@@ -8,8 +8,17 @@ sound += You claw:evt__melee_hit.wav
 sound += You shoot:evt__ranged.wav
 sound += You throw:evt__ranged.wav
 sound += You cast:evt__cast_spell.wav
+# --- combattimento difensivo: quello che SUBISCI (nemico -> giocatore) ---
+sound += bites you:evt__hurt_bite.wav
+sound += claws you:evt__hurt_claw.wav
+sound += hits you:evt__hurt.wav
+sound += You block:evt__block.wav
+sound += misses you:evt__miss_enemy.wav
 sound += You drink:evt__quaff.wav
 sound += You read:evt__read.wav
+# --- momenti epici: PRIMA del pickup generico (DCSS gioca il primo match) ---
+sound += Orb of Zot:evt__orb.wav
+sound += rune of Zot:evt__rune.wav
 sound += You now have:evt__pickup.wav
 sound += open the door:evt__door.wav
 sound += open the gate:evt__door.wav
@@ -26,6 +35,10 @@ sound += experience level:evt__level_up.wav
 sound += reach.*level:evt__level_up.wav
 # --- HP basso: regex predefinita del motore ---
 sound += LOW HITPOINT WARNING:evt__hp_low.wav
+# --- morte del giocatore: sting + stop musica (il layer grafico fa il fade a nero).
+#     Candidati da confermare dal log di morte reale (0.34 non ha un messaggio unico). ---
+sound += You die:state__player_death.wav
+sound += You have died:state__player_death.wav
 
 # === Hook Lua: musica per zona + ducking su HP basso (Fase 3) ===
 {

@@ -13,7 +13,15 @@
     "evt__stairs_up":   {"files": ["evt__stairs_up.wav"], "volume": 0.6, "group": "env"},
     "evt__spot":      {"files": ["evt__spot.wav"], "volume": 0.55, "group": "combat"},
     "evt__kill":      {"files": ["evt__kill.wav"], "volume": 0.8, "group": "combat"},
-    "evt__level_up":  {"files": ["evt__level_up.wav"], "volume": 1.0, "group": "jingle", "duck": true}
+    "evt__hurt":      {"files": ["evt__hurt.wav", "evt__hurt2.wav", "evt__hurt3.wav"], "volume": 0.75, "group": "combat"},
+    "evt__hurt_bite": {"files": ["evt__hurt_bite.wav"], "volume": 0.75, "group": "combat"},
+    "evt__hurt_claw": {"files": ["evt__hurt_claw.wav"], "volume": 0.75, "group": "combat"},
+    "evt__block":     {"files": ["evt__block.wav"], "volume": 0.7, "group": "combat"},
+    "evt__miss_enemy":{"files": ["evt__miss_enemy.wav"], "volume": 0.5, "group": "combat"},
+    "evt__level_up":  {"files": ["evt__level_up.wav"], "volume": 1.0, "group": "jingle", "duck": true},
+    "evt__orb":       {"files": ["evt__orb.wav"], "volume": 1.0, "group": "jingle", "duck": true},
+    "evt__rune":      {"files": ["evt__rune.wav"], "volume": 1.0, "group": "jingle", "duck": true},
+    "state__player_death": {"files": ["state__player_death.wav"], "volume": 1.0, "group": "jingle", "stop_music": true}
   },
   "music": {
     "state__branch_D":      {"file": "dungeon.mp3", "volume": 0.5},
@@ -40,6 +48,5 @@
     "state__branch_Pan":    {"file": "pan.mp3",     "volume": 0.55}
   },
   "control": {"state__hp_low": {"op": "duck", "volume": 0.3},
-              "state__hp_ok":  {"op": "unduck"},
-              "state__player_death": {"op": "stop_music"}}
+              "state__hp_ok":  {"op": "unduck"}}
 }

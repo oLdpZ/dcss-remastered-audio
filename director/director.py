@@ -42,7 +42,7 @@ def main():
         print("[evt]", token, "->", [a["op"] for a in actions] or "(nessuna azione)")
         for a in actions:
             op = a["op"]
-            if op == "sfx":     engine.play_sfx(a["file"], a["volume"], a["group"])
+            if op == "sfx":     engine.play_sfx(a["file"], a["volume"], a["group"], a.get("duck", False))
             elif op == "music": engine.play_music(a["file"], a["volume"])
             elif op == "duck":  engine.duck(a["volume"])
             elif op == "unduck":engine.unduck()

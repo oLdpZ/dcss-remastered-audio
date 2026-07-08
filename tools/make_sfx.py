@@ -154,4 +154,75 @@ save("evt__stairs_down.wav", stairs(-1))
 random.seed(61)
 save("evt__stairs_up.wav", stairs(1))
 
+# =========================================================================
+#  Combattimento difensivo (quello che SUBISCI) + morte + momenti epici
+# =========================================================================
+
+# --- vieni colpito: tonfo sul corpo + schiaffo + breve grugnito (pitch variato) ---
+def hurt(seed):
+    random.seed(seed)
+    thump = tone(75, 0.10, 0.03, vol=0.7)
+    slap  = noise(0.07, 0.02, vol=0.4, lp=0.5)
+    grunt = tone(150 + seed * 8, 0.16, 0.06, vol=0.35,
+                 partials=(1, 0.6, 0.4, 0.2), vibrato=0.02)
+    return mix([pad(thump, 0.24), pad(slap, 0.24),
+                pad([0] * int(0.02 * FR) + grunt, 0.24)])
+
+save("evt__hurt.wav",  hurt(11))
+save("evt__hurt2.wav", hurt(12))
+save("evt__hurt3.wav", hurt(13))
+
+# --- morso: due crunch ravvicinati + snap ---
+random.seed(70)
+save("evt__hurt_bite.wav", mix([
+    pad(noise(0.05, 0.012, vol=0.6, lp=0.7), 0.16),
+    pad([0] * int(0.06 * FR) + noise(0.05, 0.012, vol=0.55, lp=0.7), 0.16),
+    pad(tone(320, 0.04, 0.015, vol=0.3, partials=(1, 0.7, 0.5)), 0.16)]))
+
+# --- artigliata: strappo brillante + whoosh discendente ---
+random.seed(71)
+save("evt__hurt_claw.wav", mix([
+    pad(noise(0.18, 0.06, vol=0.45, lp=0.85), 0.2),
+    pad(sweep(900, 250, 0.16, 0.07, vol=0.22), 0.2)]))
+
+# --- parata con scudo: clangore metallico inarmonico + tick ---
+def metal(f, vol, tau):
+    return mix([tone(f, 0.4, tau, vol=vol),
+                tone(f * 2.76, 0.4, tau * 0.8, vol=vol * 0.5),
+                tone(f * 5.4, 0.35, tau * 0.6, vol=vol * 0.3)])
+
+random.seed(72)
+save("evt__block.wav", mix([pad(metal(520, 0.4, 0.18), 0.5),
+                            pad(noise(0.03, 0.008, vol=0.3, lp=0.8), 0.5)]))
+
+# --- il nemico ti manca: sibilo d'aria (whiff) ---
+random.seed(73)
+save("evt__miss_enemy.wav", mix([pad(noise(0.14, 0.05, vol=0.35, lp=0.2), 0.18),
+                                 pad(sweep(1400, 500, 0.12, 0.05, vol=0.12), 0.18)]))
+
+# --- morte: accordo minore basso + discesa cupa + boom sub (sting ~1.8s) ---
+death = []
+for f in (131, 156, 196):          # Do minore (C3 Eb3 G3)
+    death.append(pad(tone(f, 1.6, 0.9, vol=0.28, partials=(1, 0.5, 0.3)), 1.8))
+death.append(pad(sweep(300, 60, 1.4, 0.7, vol=0.25), 1.8))
+death.append(pad(tone(55, 1.6, 1.0, vol=0.4), 1.8))
+save("state__player_death.wav", mix(death))
+
+# --- Orb of Zot: fanfara trionfale (arpeggio maggiore ottoni + accordo finale + sparkle) ---
+BRASS = (1, 0.7, 0.5, 0.35, 0.2)
+orb = []
+for k, f in enumerate([392, 523, 659, 784]):   # G4 C5 E5 G5 ascendente
+    orb.append(pad([0] * int(0.14 * k * FR) + tone(f, 0.6, 0.4, vol=0.34, partials=BRASS), 2.0))
+for f in (523, 659, 784, 1046):                 # accordo maggiore ampio
+    orb.append(pad([0] * int(0.56 * FR) + tone(f, 1.2, 0.7, vol=0.22, partials=BRASS), 2.0))
+orb.append(pad([0] * int(0.6 * FR) + tone(2093, 0.5, 0.35, vol=0.16, partials=(1, 0.6)), 2.0))
+save("evt__orb.wav", mix(orb))
+
+# --- rune: chime trionfale corto (triade maggiore brillante + sparkle) ---
+rune = []
+for k, f in enumerate([659, 831, 988]):         # Mi maggiore (E5 G#5 B5)
+    rune.append(pad([0] * int(0.07 * k * FR) + tone(f, 0.5, 0.32, vol=0.3, partials=(1, 0.5, 0.3)), 1.0))
+rune.append(pad([0] * int(0.18 * FR) + tone(1318, 0.4, 0.3, vol=0.16, partials=(1, 0.6)), 1.0))
+save("evt__rune.wav", mix(rune))
+
 print("SFX sintetizzati in", OUT)
