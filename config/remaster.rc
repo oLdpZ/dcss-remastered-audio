@@ -46,6 +46,8 @@ local last_branch = nil
 local last_hp_band = nil
 local last_xl = 0
 local last_name = nil
+local last_px = nil
+local last_py = nil
 function ready()
   -- Rileva una NUOVA partita (dopo la morte): nome diverso o livello esperienza azzerato.
   -- Serve perche' last_branch persiste nello stesso processo crawl.exe tra una partita e l'altra.
@@ -55,6 +57,7 @@ function ready()
     if nm ~= last_name or xl < last_xl then
       last_branch = nil      -- forza il riavvio della musica del branch
       last_hp_band = nil
+      last_px = nil          -- niente passo spurio all'inizio di una nuova partita
     end
     last_name = nm
     last_xl = xl
@@ -71,6 +74,22 @@ function ready()
       last_hp_band = band
       crawl.playsound("remaster/audio/markers/state__hp_" .. band .. ".wav")
     end
+  end
+  -- Passo di camminata: nessun messaggio di gioco lo segnala, quindi lo deduciamo
+  -- dal cambio di posizione. Suona SOLO se ci si e' spostati di una casella adiacente
+  -- (dx,dy in -1..1, non entrambi 0): esclude attesa/attacco/cast (pos invariata) e
+  -- scale/teletrasporto (salto > 1 casella).
+  local okp, px, py = pcall(function() return you.pos() end)
+  if okp and px and py then
+    if last_px ~= nil then
+      local dx = px - last_px
+      local dy = py - last_py
+      if (dx ~= 0 or dy ~= 0) and dx >= -1 and dx <= 1 and dy >= -1 and dy <= 1 then
+        crawl.playsound("remaster/audio/sfx/evt__step.wav")
+      end
+    end
+    last_px = px
+    last_py = py
   end
 end
 }

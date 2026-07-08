@@ -225,4 +225,10 @@ for k, f in enumerate([659, 831, 988]):         # Mi maggiore (E5 G#5 B5)
 rune.append(pad([0] * int(0.18 * FR) + tone(1318, 0.4, 0.3, vol=0.16, partials=(1, 0.6)), 1.0))
 save("evt__rune.wav", mix(rune))
 
+# --- passo di camminata: cortissimo, morbido, 2 varianti (piede dx/sx) ---
+random.seed(80)
+save("evt__step.wav",  pad(footstep(95, 0.30), 0.12))
+random.seed(81)
+save("evt__step2.wav", pad(footstep(88, 0.28), 0.12))
+
 print("SFX sintetizzati in", OUT)

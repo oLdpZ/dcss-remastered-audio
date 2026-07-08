@@ -18,6 +18,7 @@
     "evt__hurt_claw": {"files": ["evt__hurt_claw.wav"], "volume": 0.75, "group": "combat"},
     "evt__block":     {"files": ["evt__block.wav"], "volume": 0.7, "group": "combat"},
     "evt__miss_enemy":{"files": ["evt__miss_enemy.wav"], "volume": 0.5, "group": "combat"},
+    "evt__step":      {"files": ["evt__step.wav", "evt__step2.wav"], "volume": 0.25, "group": "env"},
     "evt__level_up":  {"files": ["evt__level_up.wav"], "volume": 1.0, "group": "jingle", "duck": true},
     "evt__orb":       {"files": ["evt__orb.wav"], "volume": 1.0, "group": "jingle", "duck": true},
     "evt__rune":      {"files": ["evt__rune.wav"], "volume": 1.0, "group": "jingle", "duck": true},
