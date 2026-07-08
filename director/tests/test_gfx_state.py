@@ -3,8 +3,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), ""))
 from gfx_state import VisualState, pack, STRUCT_SIZE, PACK_FORMAT
 
 def test_struct_is_88_bytes():
-    assert STRUCT_SIZE == 88
-    assert struct.calcsize(PACK_FORMAT) == 88
+    assert STRUCT_SIZE == 108
+    assert struct.calcsize(PACK_FORMAT) == 108
 
 def test_pack_roundtrip_fields_in_order():
     vs = VisualState()
@@ -28,3 +28,13 @@ def test_defaults_are_neutral():
     assert v[3:6] == (0.0, 0.0, 0.0)    # no tint
     assert v[6] == 0.0                  # grade_strength
     assert v[7] == 0.0                  # desaturate
+
+def test_new_fields_roundtrip_at_correct_offsets():
+    vs = VisualState()
+    vs.flags = 3
+    vs.vignette_tint = (0.6, 0.1, 0.05)
+    vs.fade_black = 0.75
+    vals = struct.unpack(PACK_FORMAT, pack(vs))
+    assert vals[22] == 3                                     # flags
+    assert tuple(round(v, 3) for v in vals[23:26]) == (0.6, 0.1, 0.05)  # vignette_tint r/g/b
+    assert abs(vals[26] - 0.75) < 1e-6                        # fade_black

@@ -14,6 +14,7 @@ class VisualRouter:
         self.state.master_intensity = float(m.get("intensity", 1.0))
         self._branch = None      # grade di base corrente (dict)
         self._hp_mod = None      # modificatore hp corrente (dict)
+        self._hp_key = None      # "hp_low" / "player_death" / None
         self._apply()
 
     def branch(self, token):
@@ -30,11 +31,11 @@ class VisualRouter:
     def modifier(self, token):
         mods = self.vmap.get("modifiers", {})
         if token == "state__hp_low":
-            self._hp_mod = mods.get("hp_low", {}); self._apply(); return True
+            self._hp_mod = mods.get("hp_low", {}); self._hp_key = "hp_low"; self._apply(); return True
         if token == "state__hp_ok":
-            self._hp_mod = None; self._apply(); return True
+            self._hp_mod = None; self._hp_key = None; self._apply(); return True
         if token == "state__player_death":
-            self._hp_mod = mods.get("player_death", {}); self._apply(); return True
+            self._hp_mod = mods.get("player_death", {}); self._hp_key = "player_death"; self._apply(); return True
         return False
 
     def event(self, token):
@@ -70,3 +71,12 @@ class VisualRouter:
             self.state.desaturate = float(hp["desaturate"])
         if "vignette_add" in hp:
             self.state.vignette = min(1.0, self.state.vignette + float(hp["vignette_add"]))
+
+        flags = 0
+        if g.get("unstable"):
+            flags |= 1
+        if self._hp_key == "hp_low":
+            flags |= 2
+        self.state.flags = flags
+        self.state.vignette_tint = tuple(hp.get("vignette_tint", (0.0, 0.0, 0.0)))
+        self.state.fade_black = float(hp.get("fade_black", 0.0))

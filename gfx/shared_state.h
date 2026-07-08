@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 /* DEVE combaciare byte-per-byte con PACK_FORMAT in gfx_state.py.
-   Tutti i campi 4 byte, nessun padding. Totale 88 byte. */
+   Tutti i campi 4 byte, nessun padding. Totale 108 byte. */
 #pragma pack(push, 1)
 typedef struct {
     uint32_t version;
@@ -19,8 +19,11 @@ typedef struct {
     float    shake_intensity;
     uint32_t bloom_seq;
     float    bloom_r, bloom_g, bloom_b, bloom_intensity;
+    uint32_t flags;
+    float    vignette_tint_r, vignette_tint_g, vignette_tint_b;
+    float    fade_black;
 } GfxState;
 #pragma pack(pop)
 
 /* Verifica dimensione a compile-time. */
-typedef char _gfxstate_size_check[(sizeof(GfxState) == 88) ? 1 : -1];
+typedef char _gfxstate_size_check[(sizeof(GfxState) == 108) ? 1 : -1];

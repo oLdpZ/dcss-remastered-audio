@@ -51,6 +51,7 @@ static const char *FRAG_SRC =
 "uniform vec3 flash; uniform float flash_i;\n"
 "uniform float shake; uniform vec2 shake_off;\n"
 "uniform vec3 bloom_c; uniform float bloom_i;\n"
+"uniform vec3 vig_tint; uniform float fade;\n"
 "void main(){\n"
 "  vec2 uv = gl_FragCoord.xy / res;\n"
 "  vec2 uv2 = (uv - 0.5) * (1.0 - 0.05*shake) + 0.5 + shake_off;\n"
@@ -61,14 +62,21 @@ static const char *FRAG_SRC =
 "  c += flash * flash_i;\n"
 "  c += bloom_c * bloom_i * smoothstep(0.4, 1.0, l);\n"
 "  float d = distance(uv, vec2(0.5));\n"
-"  c *= 1.0 - vignette * smoothstep(0.35, 0.75, d);\n"
+"  float vg = vignette * smoothstep(0.35, 0.75, d);\n"
+"  c = mix(c, vig_tint, vg);\n"
+"  c = mix(c, vec3(0.0), fade);\n"
 "  gl_FragColor = vec4(c, 1.0);\n"
 "}\n";
+
+/* Bit di GfxState.flags (devono combaciare con FLAG_UNSTABLE/FLAG_HP_LOW in gfx_state.py). */
+#define FLAG_UNSTABLE 1u
+#define FLAG_HP_LOW   2u
 
 static int g_ready = -1;   /* -1 unknown, 0 failed, 1 ok */
 static GLuint g_prog = 0, g_tex = 0;
 static GLint u_tint, u_strength, u_desat, u_vignette, u_res, u_tex;
 static GLint u_flash, u_flash_i, u_shake, u_shake_off, u_bloom_c, u_bloom_i;
+static GLint u_vig_tint, u_fade;
 
 /* --- Envelope / dt tracking per la "juice" degli eventi (Task 8) --- */
 static LARGE_INTEGER g_freq, g_last; static int g_clock = 0;
@@ -100,6 +108,9 @@ static void decay(float *e, float dt, float rate) {
    con un lerp per frame (k=0.08 ~= 1s a 60fps), cosi' i grade non scattano. */
 static float cur_tint[3] = {0.0f, 0.0f, 0.0f};
 static float cur_strength = 0.0f, cur_desat = 0.0f, cur_vignette = 0.0f;
+static float cur_vig_tint[3] = {0.0f, 0.0f, 0.0f};
+static float cur_fade = 0.0f;
+static float g_time = 0.0f;   /* accumulatore tempo per le modulazioni sinusoidali (Task 9) */
 static float lerp(float a, float b, float k) { return a + (b - a) * k; }
 
 #define LOAD(var,type,name) var=(type)wglGetProcAddress(name); if(!var) return 0;
@@ -154,6 +165,8 @@ int pp_init(void) {
     u_shake_off = pglGetUniformLocation(g_prog, "shake_off");
     u_bloom_c = pglGetUniformLocation(g_prog, "bloom_c");
     u_bloom_i = pglGetUniformLocation(g_prog, "bloom_i");
+    u_vig_tint = pglGetUniformLocation(g_prog, "vig_tint");
+    u_fade = pglGetUniformLocation(g_prog, "fade");
     pglUseProgram(0);
 
     glGenTextures(1, &g_tex);
@@ -172,6 +185,7 @@ void pp_draw(const GfxState *st, int w, int h) {
     /* Rileva nuovi eventi via seq-counter e arma le envelope; poi decadono
        nel tempo (dt reale via QueryPerformanceCounter). */
     float dt = tick_dt();
+    g_time += dt;
     if (st->flash_seq != last_flash_seq) {
         last_flash_seq = st->flash_seq;
         env_flash = st->flash_intensity;
@@ -212,7 +226,19 @@ void pp_draw(const GfxState *st, int w, int h) {
         cur_strength = lerp(cur_strength, st->grade_strength * mi, k);
         cur_desat = lerp(cur_desat, st->desaturate * mi, k);
         cur_vignette = lerp(cur_vignette, st->vignette * mi, k);
+        cur_vig_tint[0] = lerp(cur_vig_tint[0], st->vignette_tint_r, k);
+        cur_vig_tint[1] = lerp(cur_vig_tint[1], st->vignette_tint_g, k);
+        cur_vig_tint[2] = lerp(cur_vig_tint[2], st->vignette_tint_b, k);
+        cur_fade = lerp(cur_fade, st->fade_black, k);
     }
+
+    /* Modulazioni sinusoidali "danger signal" (Task 9): instabilita' di
+       zona (Abyss/Pan) fa pulsare lentamente il grading; HP bassa fa
+       pulsare la vignetta rossa piu' rapidamente. */
+    float strength_mod = (st->flags & FLAG_UNSTABLE)
+        ? (1.0f + 0.25f * sinf(g_time * 1.5f)) : 1.0f;
+    float vignette_mod = (st->flags & FLAG_HP_LOW)
+        ? (1.0f + 0.25f * sinf(g_time * 4.0f)) : 1.0f;
 
     /* Offset di shake: jitter per-frame usando il perf-counter come fase
        (deterministico rispetto al tempo, non serve rand()). */
@@ -223,9 +249,9 @@ void pp_draw(const GfxState *st, int w, int h) {
     pglUseProgram(g_prog);
     pglUniform1i(u_tex, 0);
     pglUniform3f(u_tint, cur_tint[0], cur_tint[1], cur_tint[2]);
-    pglUniform1f(u_strength, cur_strength);
+    pglUniform1f(u_strength, cur_strength * strength_mod);
     pglUniform1f(u_desat, cur_desat);
-    pglUniform1f(u_vignette, cur_vignette);
+    pglUniform1f(u_vignette, cur_vignette * vignette_mod);
     pglUniform2f(u_res, (float)w, (float)h);
     pglUniform3f(u_flash, flash_col[0], flash_col[1], flash_col[2]);
     pglUniform1f(u_flash_i, env_flash * mi);
@@ -233,6 +259,8 @@ void pp_draw(const GfxState *st, int w, int h) {
     pglUniform2f(u_shake_off, sx, sy);
     pglUniform3f(u_bloom_c, bloom_col[0], bloom_col[1], bloom_col[2]);
     pglUniform1f(u_bloom_i, env_bloom * mi);
+    pglUniform3f(u_vig_tint, cur_vig_tint[0], cur_vig_tint[1], cur_vig_tint[2]);
+    pglUniform1f(u_fade, cur_fade);
 
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0); glVertex2f(0, 0);

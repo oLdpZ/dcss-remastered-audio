@@ -4,7 +4,8 @@ from visual_router import VisualRouter
 
 VMAP = {
   "master": {"enable": 1, "intensity": 1.0},
-  "grades": {"Lair": {"tint": [0.15,0.45,0.18], "strength": 0.22, "vignette": 0.25, "bloom_base": 0.0}},
+  "grades": {"Lair": {"tint": [0.15,0.45,0.18], "strength": 0.22, "vignette": 0.25, "bloom_base": 0.0},
+             "Abyss": {"tint": [0.35,0.15,0.40], "strength": 0.30, "vignette": 0.40, "bloom_base": 0.05, "unstable": 1}},
   "modifiers": {"hp_low": {"desaturate": 0.4, "vignette_add": 0.3, "vignette_tint": [0.6,0,0]},
                 "hp_ok": {}, "player_death": {"desaturate": 1.0, "fade_black": 1.0}},
   "events": {"evt__level_up": {"flash": [1.0,0.9,0.4], "flash_intensity": 0.35,
@@ -40,3 +41,22 @@ def test_event_bumps_pulse_seq_each_time():
 
 def test_unknown_token_returns_false():
     assert VisualRouter(VMAP).route("evt__nope") is False
+
+def test_unstable_branch_sets_flag():
+    r = VisualRouter(VMAP)
+    r.route("state__branch_Abyss")
+    assert r.state.flags & 1
+
+def test_hp_low_sets_flag_and_vignette_tint():
+    r = VisualRouter(VMAP)
+    r.route("state__branch_Lair")
+    r.route("state__hp_low")
+    assert r.state.flags & 2
+    assert r.state.vignette_tint == (0.6, 0, 0)
+
+def test_player_death_sets_fade_black_without_hp_low_flag():
+    r = VisualRouter(VMAP)
+    r.route("state__branch_Lair")
+    r.route("state__player_death")
+    assert r.state.fade_black == 1.0
+    assert r.state.flags & 2 == 0

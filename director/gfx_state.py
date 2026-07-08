@@ -8,9 +8,13 @@ import mmap, struct
 #  flash_seq(I) flash_r/g/b(f) flash_intensity(f)
 #  shake_seq(I) shake_intensity(f)
 #  bloom_seq(I) bloom_r/g/b(f) bloom_intensity(f)
-PACK_FORMAT = "<IIf" "ffff" "fff" "I" "ffff" "If" "I" "ffff"
-STRUCT_SIZE = struct.calcsize(PACK_FORMAT)   # == 88
+#  flags(I) vignette_tint_r/g/b(f) fade_black(f)
+PACK_FORMAT = "<IIf" "ffff" "fff" "I" "ffff" "If" "I" "ffff" "Iffff"
+STRUCT_SIZE = struct.calcsize(PACK_FORMAT)   # == 108
 SHMEM_NAME = "dcss_gfx_state"
+
+FLAG_UNSTABLE = 1
+FLAG_HP_LOW = 2
 
 class VisualState:
     def __init__(self):
@@ -30,6 +34,9 @@ class VisualState:
         self.bloom_seq = 0
         self.bloom = (0.0, 0.0, 0.0)
         self.bloom_intensity = 0.0
+        self.flags = 0
+        self.vignette_tint = (0.0, 0.0, 0.0)
+        self.fade_black = 0.0
 
 def pack(vs):
     return struct.pack(
@@ -40,6 +47,7 @@ def pack(vs):
         vs.flash_seq, vs.flash[0], vs.flash[1], vs.flash[2], vs.flash_intensity,
         vs.shake_seq, vs.shake_intensity,
         vs.bloom_seq, vs.bloom[0], vs.bloom[1], vs.bloom[2], vs.bloom_intensity,
+        vs.flags, vs.vignette_tint[0], vs.vignette_tint[1], vs.vignette_tint[2], vs.fade_black,
     )
 
 class GfxShmem:
