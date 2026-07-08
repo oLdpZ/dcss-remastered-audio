@@ -119,6 +119,7 @@ int main(void) {
 
     int first_frame = 1;
     int running = 1;
+    int frame_count = 0;
     MSG msg;
     while (running) {
         while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -127,6 +128,26 @@ int main(void) {
             DispatchMessageW(&msg);
         }
         if (!running) break;
+
+        /* Ogni ~90 frame (~1.5s a 60fps) fa scattare a turno flash, shake
+           e bloom bumpando il rispettivo seq counter, cosi' si vede la
+           envelope decadere senza input umano (Task 8 harness). */
+        frame_count++;
+        int phase = (frame_count / 90) % 3;
+        if (frame_count % 90 == 1) {
+            if (phase == 0) {
+                fake.flash_seq++;
+                fake.flash_r = 1.0f; fake.flash_g = 1.0f; fake.flash_b = 1.0f;
+                fake.flash_intensity = 0.8f;
+            } else if (phase == 1) {
+                fake.shake_seq++;
+                fake.shake_intensity = 1.0f;
+            } else {
+                fake.bloom_seq++;
+                fake.bloom_r = 1.0f; fake.bloom_g = 0.85f; fake.bloom_b = 0.3f;
+                fake.bloom_intensity = 1.0f;
+            }
+        }
 
         draw_test_scene(W, H);
         pp_draw(&fake, W, H);

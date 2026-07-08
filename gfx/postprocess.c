@@ -45,12 +45,18 @@ static const char *FRAG_SRC =
 "uniform vec3 tint; uniform float strength;\n"
 "uniform float desat; uniform float vignette;\n"
 "uniform vec2 res;\n"
+"uniform vec3 flash; uniform float flash_i;\n"
+"uniform float shake; uniform vec2 shake_off;\n"
+"uniform vec3 bloom_c; uniform float bloom_i;\n"
 "void main(){\n"
 "  vec2 uv = gl_FragCoord.xy / res;\n"
-"  vec3 c = texture2D(tex, uv).rgb;\n"
+"  vec2 uv2 = (uv - 0.5) * (1.0 - 0.03*shake) + 0.5 + shake_off;\n"
+"  vec3 c = texture2D(tex, uv2).rgb;\n"
 "  float l = dot(c, vec3(0.299,0.587,0.114));\n"
 "  c = mix(c, vec3(l), desat);\n"
 "  c = mix(c, tint, strength);\n"
+"  c += flash * flash_i;\n"
+"  c += bloom_c * bloom_i * smoothstep(0.4, 1.0, l);\n"
 "  float d = distance(uv, vec2(0.5));\n"
 "  c *= 1.0 - vignette * smoothstep(0.35, 0.75, d);\n"
 "  gl_FragColor = vec4(c, 1.0);\n"
@@ -59,6 +65,33 @@ static const char *FRAG_SRC =
 static int g_ready = -1;   /* -1 unknown, 0 failed, 1 ok */
 static GLuint g_prog = 0, g_tex = 0;
 static GLint u_tint, u_strength, u_desat, u_vignette, u_res, u_tex;
+static GLint u_flash, u_flash_i, u_shake, u_shake_off, u_bloom_c, u_bloom_i;
+
+/* --- Envelope / dt tracking per la "juice" degli eventi (Task 8) --- */
+static LARGE_INTEGER g_freq, g_last; static int g_clock = 0;
+static unsigned last_flash_seq = 0, last_shake_seq = 0, last_bloom_seq = 0;
+static float env_flash = 0.0f, env_shake = 0.0f, env_bloom = 0.0f;   /* 0..1 decaying */
+static float flash_col[3] = {0.0f, 0.0f, 0.0f}, bloom_col[3] = {0.0f, 0.0f, 0.0f};
+
+static float tick_dt(void) {
+    if (!g_clock) {
+        QueryPerformanceFrequency(&g_freq);
+        QueryPerformanceCounter(&g_last);
+        g_clock = 1;
+        return 0.016f;
+    }
+    LARGE_INTEGER now; QueryPerformanceCounter(&now);
+    float dt = (float)(now.QuadPart - g_last.QuadPart) / (float)g_freq.QuadPart;
+    g_last = now;
+    if (dt > 0.1f) dt = 0.1f;
+    if (dt < 0.0f) dt = 0.0f;
+    return dt;
+}
+
+static void decay(float *e, float dt, float rate) {
+    *e -= dt * rate;
+    if (*e < 0.0f) *e = 0.0f;
+}
 
 /* Crossfade: valori "correnti" che rincorrono il target dello stato condiviso
    con un lerp per frame (k=0.08 ~= 1s a 60fps), cosi' i grade non scattano. */
@@ -112,6 +145,12 @@ int pp_init(void) {
     u_vignette = pglGetUniformLocation(g_prog, "vignette");
     u_res = pglGetUniformLocation(g_prog, "res");
     u_tex = pglGetUniformLocation(g_prog, "tex");
+    u_flash = pglGetUniformLocation(g_prog, "flash");
+    u_flash_i = pglGetUniformLocation(g_prog, "flash_i");
+    u_shake = pglGetUniformLocation(g_prog, "shake");
+    u_shake_off = pglGetUniformLocation(g_prog, "shake_off");
+    u_bloom_c = pglGetUniformLocation(g_prog, "bloom_c");
+    u_bloom_i = pglGetUniformLocation(g_prog, "bloom_i");
     pglUseProgram(0);
 
     glGenTextures(1, &g_tex);
@@ -126,6 +165,27 @@ void pp_draw(const GfxState *st, int w, int h) {
     if (!st || !st->master_enable || w <= 0 || h <= 0) return;
     if (!pp_init()) return;                 /* fallback: nessun effetto */
     float mi = st->master_intensity;
+
+    /* Rileva nuovi eventi via seq-counter e arma le envelope; poi decadono
+       nel tempo (dt reale via QueryPerformanceCounter). */
+    float dt = tick_dt();
+    if (st->flash_seq != last_flash_seq) {
+        last_flash_seq = st->flash_seq;
+        env_flash = st->flash_intensity;
+        flash_col[0] = st->flash_r; flash_col[1] = st->flash_g; flash_col[2] = st->flash_b;
+    }
+    if (st->shake_seq != last_shake_seq) {
+        last_shake_seq = st->shake_seq;
+        env_shake = st->shake_intensity;
+    }
+    if (st->bloom_seq != last_bloom_seq) {
+        last_bloom_seq = st->bloom_seq;
+        env_bloom = st->bloom_intensity;
+        bloom_col[0] = st->bloom_r; bloom_col[1] = st->bloom_g; bloom_col[2] = st->bloom_b;
+    }
+    decay(&env_flash, dt, 3.0f);   /* ~0.3s */
+    decay(&env_shake, dt, 4.0f);   /* ~0.25s */
+    decay(&env_bloom, dt, 2.0f);   /* ~0.5s */
 
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity(); glOrtho(0, 1, 0, 1, -1, 1);
@@ -149,6 +209,12 @@ void pp_draw(const GfxState *st, int w, int h) {
         cur_vignette = lerp(cur_vignette, st->vignette * mi, k);
     }
 
+    /* Offset di shake: jitter per-frame usando il perf-counter come fase
+       (deterministico rispetto al tempo, non serve rand()). */
+    float shake_phase = (float)(g_last.QuadPart % 1000000) * 0.001f;
+    float sx = env_shake * 0.02f * sinf(shake_phase * 13.0f);
+    float sy = env_shake * 0.02f * cosf(shake_phase * 17.0f);
+
     pglUseProgram(g_prog);
     pglUniform1i(u_tex, 0);
     pglUniform3f(u_tint, cur_tint[0], cur_tint[1], cur_tint[2]);
@@ -156,6 +222,12 @@ void pp_draw(const GfxState *st, int w, int h) {
     pglUniform1f(u_desat, cur_desat);
     pglUniform1f(u_vignette, cur_vignette);
     pglUniform2f(u_res, (float)w, (float)h);
+    pglUniform3f(u_flash, flash_col[0], flash_col[1], flash_col[2]);
+    pglUniform1f(u_flash_i, env_flash * mi);
+    pglUniform1f(u_shake, env_shake * mi);
+    pglUniform2f(u_shake_off, sx, sy);
+    pglUniform3f(u_bloom_c, bloom_col[0], bloom_col[1], bloom_col[2]);
+    pglUniform1f(u_bloom_i, env_bloom * mi);
 
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0); glVertex2f(0, 0);
