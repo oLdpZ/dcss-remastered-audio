@@ -54,23 +54,29 @@ local last_gold = nil
 local PICKUP_CAP = 2        -- max suoni di pickup per turno (anti-cacofonia)
 local DEBUG_CLASS = false   -- true = emette il nome classe grezzo su director.log (tuning)
 
--- classe terse di item:class(true) -> token wav
-local CLASS_SND = {
-  ["weapon"]        = "evt__pickup_weapon",
-  ["armour"]        = "evt__pickup_armour",
-  ["missile"]       = "evt__pickup_missile",
-  ["scroll"]        = "evt__pickup_scroll",
-  ["potion"]        = "evt__pickup_potion",
-  ["wand"]          = "evt__pickup_wand",
-  ["book"]          = "evt__pickup_book",
-  ["magical staff"] = "evt__pickup_staff",
-  ["staff"]         = "evt__pickup_staff",
-  ["miscellaneous"] = "evt__pickup_misc",
-  ["misc"]          = "evt__pickup_misc",
-  ["talisman"]      = "evt__pickup_talisman",
-  -- oro ridondante (gestito dal delta you.gold()); "jewellery" gestita a parte (ring vs amulet).
-  -- NB: la '}' di chiusura NON deve stare da sola a colonna 0, o DCSS chiude qui l'intero blocco Lua.
-  ["gold"]          = "evt__pickup_gold" }
+-- item:class(true) NON restituisce nomi terse minuscoli in questa build 0.34:
+-- restituisce la categoria capitalizzata e plurale ("Armour", "Potions", "Weapons"...).
+-- Percio' NON si usa un match esatto: si abbassa la stringa e si cerca una keyword.
+-- Robusto a maiuscole/plurali/varianti. Ordine: nessuna keyword e' prefisso di un'altra.
+-- La '}' di chiusura NON deve stare da sola a colonna 0, o DCSS chiude qui il blocco Lua.
+local CLASS_KW = {
+  {"weapon",   "evt__pickup_weapon"},
+  {"armour",   "evt__pickup_armour"},
+  {"armor",    "evt__pickup_armour"},
+  {"missile",  "evt__pickup_missile"},
+  {"ammun",    "evt__pickup_missile"},
+  -- "scroll" NON e' qui: le pergamene sono gestite via messaggio in c_message (il diff
+  -- inventario non le rileva sugli stack). Vedi c_message piu' sotto.
+  {"potion",   "evt__pickup_potion"},
+  {"wand",     "evt__pickup_wand"},
+  {"book",     "evt__pickup_book"},
+  {"manual",   "evt__pickup_book"},
+  {"stav",     "evt__pickup_staff"},   -- "Magical Staves" / "Staff"
+  {"staff",    "evt__pickup_staff"},
+  {"talisman", "evt__pickup_talisman"},
+  {"misc",     "evt__pickup_misc"},    -- "Miscellaneous"
+  {"bauble",   "evt__pickup_misc"},    -- "Baubles" (0.34): evocabili/gingilli -> misc
+  {"gold",     "evt__pickup_gold"} }
 
 local function play_pickup(token)
   crawl.playsound("remaster/audio/sfx/" .. token .. ".wav")
@@ -80,23 +86,34 @@ end
 local function token_for(it)
   local okc, cls = pcall(function() return it:class(true) end)
   if not okc or not cls then return "evt__pickup" end
+  local lc = string.lower(tostring(cls))
   if DEBUG_CLASS then
     crawl.playsound("remaster/dbg/cls_" .. tostring(cls) .. ".wav")
   end
-  if cls == "jewellery" then
+  if string.find(lc, "jewel", 1, true) then          -- jewellery -> ring/amulet dal nome
     local okn, nm = pcall(function() return it:name() end)
-    if okn and nm and string.find(string.lower(nm), "amulet") then
+    if okn and nm and string.find(string.lower(nm), "amulet", 1, true) then
       return "evt__pickup_amulet"
     end
     return "evt__pickup_ring"
   end
-  return CLASS_SND[cls] or "evt__pickup"
+  for _, kw in ipairs(CLASS_KW) do
+    if string.find(lc, kw[1], 1, true) then return kw[2] end
+  end
+  return "evt__pickup"
 end
 
 -- Hook messaggi: alzato ogni volta che il gioco stampa una riga durante un'azione.
 -- Serve a distinguere una camminata (silenziosa) da attacco/cast/pozione/ecc.
 function c_message(text, channel)
   msg_this_turn = true
+  local lt = string.lower(tostring(text))
+  -- Pergamene: il diff inventario non le rileva sugli stack, quindi si usa il MESSAGGIO.
+  -- Il pickup stampa la riga-inventario "<lettera> - ... scroll ...": ha " - " E "scroll".
+  -- Lettura ("You read...") e vista ("You see here a scroll") NON hanno " - " -> no falsi positivi.
+  if string.find(lt, " - ", 1, true) and string.find(lt, "scroll", 1, true) then
+    crawl.playsound("remaster/audio/sfx/evt__pickup_scroll.wav")
+  end
 end
 function ready()
   -- Rileva una NUOVA partita (dopo la morte): nome diverso o livello esperienza azzerato.

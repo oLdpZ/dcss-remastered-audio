@@ -1,10 +1,14 @@
 audio/sfx/*.wav
 audio/sfx/*.ogg
+# eccezione: asset reali registrati (non rigenerabili da make_sfx.py), vanno versionati
+!audio/sfx/evt__pickup_potion.ogg
 audio/music/*
 audio/ambience/*
 audio/markers/*.wav
 __pycache__/
 director/director.log
+# scaffolding diagnostico DEBUG_CLASS (placeholder generati al bisogno)
+dbg/
 # artefatti packaging/freezing (PyInstaller) e release
 director/director.exe
 director/build/

@@ -11,7 +11,7 @@
     "evt__pickup_armour":   {"files": ["evt__pickup_armour.wav"],   "volume": 0.6,  "group": "item"},
     "evt__pickup_missile":  {"files": ["evt__pickup_missile.wav"],  "volume": 0.55, "group": "item"},
     "evt__pickup_scroll":   {"files": ["evt__pickup_scroll.wav"],   "volume": 0.55, "group": "item"},
-    "evt__pickup_potion":   {"files": ["evt__pickup_potion.wav"],   "volume": 0.55, "group": "item"},
+    "evt__pickup_potion":   {"files": ["evt__pickup_potion.ogg"],   "volume": 0.55, "group": "item"},
     "evt__pickup_ring":     {"files": ["evt__pickup_ring.wav"],     "volume": 0.55, "group": "item"},
     "evt__pickup_amulet":   {"files": ["evt__pickup_amulet.wav"],   "volume": 0.55, "group": "item"},
     "evt__pickup_wand":     {"files": ["evt__pickup_wand.wav"],     "volume": 0.55, "group": "item"},

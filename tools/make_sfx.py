@@ -241,12 +241,13 @@ save("evt__pickup_scroll.wav", mix([
     pad(noise(0.10, 0.04, vol=0.32, lp=0.35), 0.16),
     pad([0]*int(0.05*FR) + noise(0.05, 0.02, vol=0.22, lp=0.4), 0.16)]))
 
-# pozione: clink vetroso brillante + piccolo "tappo"
-random.seed(91)
-save("evt__pickup_potion.wav", mix([
-    pad(tone(1760, 0.10, 0.05, vol=0.35, partials=(1, 0.6, 0.3)), 0.20),
-    pad([0]*int(0.03*FR) + tone(2637, 0.08, 0.04, vol=0.22), 0.20),
-    pad([0]*int(0.11*FR) + tone(300, 0.05, 0.02, vol=0.18), 0.20)]))  # pop tappo
+# pozione: il suono udibile e' un asset reale registrato (CC0, Freesound) ->
+# audio/sfx/evt__pickup_potion.ogg, mappato in soundmap.json (vedi CREDITS.txt).
+# Qui generiamo solo uno STUB SILENZIOSO evt__pickup_potion.wav: il .rc chiama
+# crawl.playsound(".../evt__pickup_potion.wav") come TRIGGER dell'evento; il proxy
+# lo intercetta e il Director riproduce l'OGG. Lo stub silenzioso garantisce che il
+# file-trigger esista (come per ogni altro token) senza aggiungere audio.
+save("evt__pickup_potion.wav", [0.0] * int(0.02 * FR))
 
 # anello: ting metallico piccolo e brillante
 random.seed(92)
