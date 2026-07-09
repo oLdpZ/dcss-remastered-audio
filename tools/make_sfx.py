@@ -258,12 +258,13 @@ save("evt__pickup_amulet.wav", mix([
     pad(tone(880, 0.5, 0.35, vol=0.3, partials=(1, 0.5, 0.25)), 0.5),
     pad([0]*int(0.06*FR) + tone(1174, 0.45, 0.3, vol=0.2, partials=(1, 0.5)), 0.5)]))
 
-# arma: "shing" metallico corto (draw della lama)
+# arma: "shing" di lama -> zing ascendente + ring metallico GRAVE e sostenuto.
+# Deliberatamente piu' basso e con coda lunga per non confondersi col jingle acuto dell'oro.
 random.seed(94)
 save("evt__pickup_weapon.wav", mix([
-    pad(sweep(600, 2600, 0.14, 0.06, vol=0.3), 0.26),
-    pad(metal(720, 0.3, 0.1), 0.26),
-    pad(noise(0.05, 0.015, vol=0.2, lp=0.85), 0.26)]))
+    pad(sweep(400, 1700, 0.12, 0.05, vol=0.28), 0.44),          # zing della lama (tetto piu' basso)
+    pad([0]*int(0.05*FR) + metal(440, 0.34, 0.24), 0.44),       # ring grave con coda lunga
+    pad(noise(0.04, 0.012, vol=0.16, lp=0.7), 0.44)]))          # attrito iniziale
 
 # armatura: clangore pesante + componente cuoio + tonfo
 random.seed(95)
