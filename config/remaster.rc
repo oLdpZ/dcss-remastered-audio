@@ -68,7 +68,7 @@ local CLASS_SND = {
   ["miscellaneous"] = "evt__pickup_misc",
   ["misc"]          = "evt__pickup_misc",
   ["talisman"]      = "evt__pickup_talisman",
-  ["gold"]          = "evt__pickup_gold",
+  ["gold"]          = "evt__pickup_gold",   -- ridondante: l'oro e' gestito dal delta you.gold(), non e' un item d'inventario in 0.34
   -- "jewellery" gestita a parte (ring vs amulet)
 }
 
@@ -85,7 +85,7 @@ local function token_for(it)
   end
   if cls == "jewellery" then
     local okn, nm = pcall(function() return it:name() end)
-    if okn and nm and string.find(nm, "amulet") then
+    if okn and nm and string.find(string.lower(nm), "amulet") then
       return "evt__pickup_amulet"
     end
     return "evt__pickup_ring"
@@ -146,7 +146,9 @@ function ready()
     for _, it in ipairs(inv) do
       local slot = it.slot
       local q = it.quantity or 1
-      cur[slot] = { qty = q, it = it }
+      if slot ~= nil then
+        cur[slot] = { qty = q, it = it }
+      end
     end
     if last_inv ~= nil then           -- salta il primo turno / nuova partita
       local played, seen = 0, {}
