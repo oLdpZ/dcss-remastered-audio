@@ -1,9 +1,10 @@
-import json, os, sys, time
+import json, os, sys, time, threading
 from router import path_to_token, Router
 from audio_engine import AudioEngine
 from pipe_server import PipeServer
 from visual_router import VisualRouter
 from gfx_state import GfxShmem
+from save_guard import SaveGuard, resolve_saves_dir, load_saveguard_config
 
 # Cartella base: quando il Director e' congelato in .exe (PyInstaller), __file__ punta
 # a una dir temporanea di estrazione, quindi usiamo la cartella dell'eseguibile; da
@@ -47,6 +48,21 @@ def main():
         engine.play_music(menu["file"], menu.get("volume", 0.5))
         print("[director] musica menu:", menu["file"])
 
+    guard = None
+    try:
+        sg_cfg = load_saveguard_config(HERE)
+        if sg_cfg.get("enabled", True):
+            saves_dir = resolve_saves_dir(HERE)
+            ckpt_dir = os.path.join(os.path.dirname(saves_dir), "remaster_checkpoints")
+            guard = SaveGuard(saves_dir, ckpt_dir, sg_cfg)
+            threading.Thread(target=guard.run_forever, daemon=True).start()
+            logln("[saveguard] attivo: saves=%s ckpt=%s keep=%s" %
+                  (saves_dir, ckpt_dir, sg_cfg.get("keep")))
+        else:
+            logln("[saveguard] disattivato da config")
+    except Exception as e:
+        logln("[saveguard] errore avvio (proseguo senza): " + repr(e))
+
     print("[director] pronto. In ascolto su \\\\.\\pipe\\dcss_audio")
     logln("=== director avviato, in ascolto ===")
 
@@ -56,6 +72,9 @@ def main():
         ops = [a["op"] for a in actions] or "(nessuna azione)"
         print("[evt]", token, "->", ops)
         logln("[evt] " + token + " -> " + str(ops))
+        if guard is not None and token == "state__player_death":
+            guard.arm_restore()
+            logln("[saveguard] restore armato (morte rilevata)")
         for a in actions:
             op = a["op"]
             if op == "sfx":     engine.play_sfx(a["file"], a["volume"], a["group"], a.get("duck", False))
