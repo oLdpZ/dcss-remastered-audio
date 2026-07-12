@@ -48,3 +48,14 @@ def test_new_content_makes_new_snapshot(tmp_path):
     _write(p, b"level2xx")                       # contenuto diverso (size diversa)
     g.poll_once(); g.poll_once()               # 0001
     assert _snaps(ckpt, "Hero") == ["0000.cs", "0001.cs"]
+
+def test_rotation_keeps_last_n(tmp_path):
+    saves, ckpt = _mk(tmp_path)
+    p = os.path.join(saves, "Hero.cs")
+    g = SaveGuard(saves, ckpt, {"keep": 3})
+    for i in range(6):
+        _write(p, b"content-%d" % i)   # contenuto sempre diverso
+        g.poll_once(); g.poll_once()   # forza snapshot
+    snaps = _snaps(ckpt, "Hero")
+    assert len(snaps) == 3
+    assert snaps == ["0003.cs", "0004.cs", "0005.cs"]

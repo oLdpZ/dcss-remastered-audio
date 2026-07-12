@@ -70,6 +70,7 @@ class SaveGuard:
         idx = self._next_index(d)
         shutil.copy2(src, os.path.join(d, "%04d.cs" % idx))
         self._last_hash[name] = h
+        self._rotate(d)
         return True
 
     def _next_index(self, d):
@@ -78,3 +79,13 @@ class SaveGuard:
             if fn.endswith(".cs") and fn[:-3].isdigit():
                 mx = max(mx, int(fn[:-3]))
         return mx + 1
+
+    def _rotate(self, d):
+        snaps = sorted(fn for fn in os.listdir(d)
+                       if fn.endswith(".cs") and fn[:-3].isdigit())
+        keep = int(self.cfg.get("keep", 5))
+        for fn in snaps[:-keep] if keep > 0 else []:
+            try:
+                os.remove(os.path.join(d, fn))
+            except OSError:
+                pass
