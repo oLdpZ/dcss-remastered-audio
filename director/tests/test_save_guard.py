@@ -59,3 +59,14 @@ def test_rotation_keeps_last_n(tmp_path):
     snaps = _snaps(ckpt, "Hero")
     assert len(snaps) == 3
     assert snaps == ["0003.cs", "0004.cs", "0005.cs"]
+
+def test_rotation_orders_numerically_past_9999(tmp_path):
+    # Regression: lexicographic sort would treat "10000.cs" as older than
+    # "9999.cs" and delete the newest snapshot. _rotate must sort numerically.
+    saves, ckpt = _mk(tmp_path)
+    d = os.path.join(ckpt, "Hero"); os.makedirs(d)
+    for name in ("9998.cs", "9999.cs", "10000.cs"):
+        _write(os.path.join(d, name), b"x")
+    g = SaveGuard(saves, ckpt, {"keep": 1})
+    g._rotate(d)
+    assert _snaps(ckpt, "Hero") == ["10000.cs"]   # newest survives

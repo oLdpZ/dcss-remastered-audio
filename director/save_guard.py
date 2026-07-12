@@ -81,8 +81,9 @@ class SaveGuard:
         return mx + 1
 
     def _rotate(self, d):
-        snaps = sorted(fn for fn in os.listdir(d)
-                       if fn.endswith(".cs") and fn[:-3].isdigit())
+        snaps = sorted((fn for fn in os.listdir(d)
+                        if fn.endswith(".cs") and fn[:-3].isdigit()),
+                       key=lambda fn: int(fn[:-3]))
         keep = int(self.cfg.get("keep", 5))
         for fn in snaps[:-keep] if keep > 0 else []:
             try:
