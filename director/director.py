@@ -54,7 +54,7 @@ def main():
         if sg_cfg.get("enabled", True):
             saves_dir = resolve_saves_dir(HERE)
             ckpt_dir = os.path.join(os.path.dirname(saves_dir), "remaster_checkpoints")
-            guard = SaveGuard(saves_dir, ckpt_dir, sg_cfg)
+            guard = SaveGuard(saves_dir, ckpt_dir, sg_cfg, log=logln)
             threading.Thread(target=guard.run_forever, daemon=True).start()
             logln("[saveguard] attivo: saves=%s ckpt=%s keep=%s" %
                   (saves_dir, ckpt_dir, sg_cfg.get("keep")))

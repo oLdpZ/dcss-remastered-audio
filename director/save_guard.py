@@ -9,14 +9,16 @@ DEFAULT_CONFIG = {
 }
 
 class SaveGuard:
-    def __init__(self, saves_dir, checkpoints_dir, config=None, clock=time.monotonic):
+    def __init__(self, saves_dir, checkpoints_dir, config=None, clock=time.monotonic, log=None):
         self.saves_dir = saves_dir
         self.checkpoints_dir = checkpoints_dir
         self.cfg = dict(DEFAULT_CONFIG); self.cfg.update(config or {})
         self._clock = clock
+        self._log = log or (lambda msg: None)
         self._known = {}      # name -> (mtime, size) stato stabile gia' snapshottato
         self._pending = {}    # name -> (mtime, size) visto ma non ancora stabile
         self._last_hash = {}  # name -> hash dell'ultimo snapshot
+        self._vanished = {}   # name -> clock time in cui il .cs e' sparito (morte)
         self._armed_at = None
 
     # --- API pubblica ---
@@ -26,22 +28,45 @@ class SaveGuard:
     def poll_once(self):
         report = {"snapshotted": [], "restored": []}
         current = self._scan()
-        for name in list(self._known):        # rileva cancellazioni
+
+        # 1. Sparizioni: un file noto non c'e' piu' -> candidato al ripristino (morte).
+        for name in list(self._known):
             if name not in current:
-                if self._maybe_restore(name):
-                    report["restored"].append(name)
+                self._vanished[name] = self._clock()
                 del self._known[name]
                 self._pending.pop(name, None)
+
+        # 2. Serve i personaggi spariti: riprova il ripristino a ogni poll finche' il
+        #    flag e' valido, e tiene d'occhio una eventuale ri-cancellazione dal gioco.
+        window = float(self.cfg.get("restore_window_seconds", 30))
+        for name in list(self._vanished):
+            if name in current:
+                # Il file e' tornato (il nostro restore ha tenuto, o e' una nuova
+                # partita con lo stesso nome): stabile -> smetti di seguirlo e disarma.
+                del self._vanished[name]
+                self._armed_at = None
+                continue
+            if self._maybe_restore(name):
+                report["restored"].append(name)
+                self._log("[saveguard] ripristinato checkpoint per " + name)
+                # resta in _vanished: al prossimo poll confermiamo che non sia
+                # stato ri-cancellato dal gioco mentre finalizzava la morte.
+            elif (self._clock() - self._vanished[name]) > window:
+                # Finestra scaduta senza ripristino riuscito -> smetti di seguirlo.
+                del self._vanished[name]
+
+        # 3. Snapshot dei file nuovi/cambiati (debounce + dedup invariati).
         for name, meta in current.items():
             if self._known.get(name) == meta:
                 continue
-            if self._pending.get(name) == meta:      # stabile per un ciclo
+            if self._pending.get(name) == meta:
                 if self._snapshot(name):
                     report["snapshotted"].append(name)
+                    self._log("[saveguard] checkpoint " + name)
                 self._known[name] = meta
                 self._pending.pop(name, None)
             else:
-                self._pending[name] = meta           # attendi stabilita'
+                self._pending[name] = meta
         return report
 
     # --- interni ---
@@ -74,7 +99,8 @@ class SaveGuard:
         d = os.path.join(self.checkpoints_dir, name)
         os.makedirs(d, exist_ok=True)
         idx = self._next_index(d)
-        shutil.copy2(src, os.path.join(d, "%04d.cs" % idx))
+        with open(os.path.join(d, "%04d.cs" % idx), "wb") as f:
+            f.write(data)
         self._last_hash[name] = h
         self._rotate(d)
         return True
@@ -90,6 +116,7 @@ class SaveGuard:
         snaps = sorted((fn for fn in os.listdir(d)
                         if fn.endswith(".cs") and fn[:-3].isdigit()),
                        key=lambda fn: int(fn[:-3]))
+        # keep <= 0 disabilita la rotazione (ritenzione illimitata).
         keep = int(self.cfg.get("keep", 5))
         for fn in snaps[:-keep] if keep > 0 else []:
             try:
@@ -118,8 +145,10 @@ class SaveGuard:
             return False
         latest = os.path.join(d, snaps[-1])
         dst = os.path.join(self.saves_dir, name + ".cs")
-        shutil.copy2(latest, dst)
-        self._armed_at = None                 # disarma dopo il ripristino
+        try:
+            shutil.copy2(latest, dst)
+        except OSError:
+            return False
         return True
 
     def run_forever(self):
@@ -128,15 +157,15 @@ class SaveGuard:
         while True:
             try:
                 self.poll_once()
-            except Exception:
-                pass
+            except Exception as e:
+                self._log("[saveguard] errore poll: " + repr(e))
             time.sleep(float(self.cfg.get("poll_seconds", 1.5)))
 
 
 def resolve_saves_dir(here):
     env = os.environ.get("DCSS_SAVES_DIR")
     if env:
-        return env
+        return os.path.abspath(env)
     return os.path.abspath(os.path.join(here, "..", "..", "saves"))
 
 

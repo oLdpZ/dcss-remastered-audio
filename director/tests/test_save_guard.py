@@ -163,3 +163,35 @@ def test_load_config_merges_file(tmp_path):
     cfg = load_saveguard_config(str(tmp_path))
     assert cfg["keep"] == 3 and cfg["enabled"] is False
     assert cfg["poll_seconds"] == 1.5             # default preservato
+
+def test_late_arm_still_restores_within_window(tmp_path):
+    # Race: the game deletes the .cs BEFORE the death token arms restore.
+    # The guard must keep tracking the vanished character and restore on a
+    # later poll once armed (not drop it on the first missing observation).
+    saves, ckpt = _mk(tmp_path)
+    p = os.path.join(saves, "Hero.cs"); _write(p, b"level1")
+    g = SaveGuard(saves, ckpt, clock=FakeClock())
+    g.poll_once(); g.poll_once()          # snapshot 0000, Hero in _known
+    os.remove(p)                           # game deletes save before token
+    assert g.poll_once()["restored"] == []  # not armed yet -> no restore
+    assert not os.path.exists(p)
+    g.arm_restore()                        # death token arrives late
+    assert g.poll_once()["restored"] == ["Hero"]  # retried within window
+    assert os.path.exists(p)
+    with open(p, "rb") as f:
+        assert f.read() == b"level1"
+
+def test_redeletion_after_restore_is_restored_again(tmp_path):
+    # Race: the game re-deletes the .cs right after our restore while still
+    # finalizing death. The guard must restore again (not disarm prematurely).
+    saves, ckpt = _mk(tmp_path)
+    p = os.path.join(saves, "Hero.cs"); _write(p, b"level1")
+    g = SaveGuard(saves, ckpt, clock=FakeClock())
+    g.poll_once(); g.poll_once()          # snapshot
+    g.arm_restore()
+    os.remove(p)
+    assert g.poll_once()["restored"] == ["Hero"]   # first restore
+    assert os.path.exists(p)
+    os.remove(p)                           # game re-deletes before it stabilizes
+    assert g.poll_once()["restored"] == ["Hero"]   # restored again
+    assert os.path.exists(p)
