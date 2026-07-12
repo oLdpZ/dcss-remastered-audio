@@ -22,3 +22,6 @@ dist/
 proxy/winmm.dll
 gfx/opengl32.dll
 gfx/harness/*.exe
+
+# SDD session scratch (task briefs, review packages, progress ledger)
+.superpowers/

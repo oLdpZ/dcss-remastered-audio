@@ -1,8 +1,10 @@
-# DCSS Remastered — launcher one-click.
+# DCSS Remastered - launcher one-click.
 # Avvia il Director (audio+grafica), lancia il gioco, chiude il Director all'uscita.
 $ErrorActionPreference = "SilentlyContinue"
 $game   = Split-Path $PSScriptRoot          # ...\stone_soup-tiles-0.34
 $dirDir = "$PSScriptRoot\director"
+# Save-Guard: tell the Director where the game's saves folder is.
+$env:DCSS_SAVES_DIR = "$game\saves"
 
 # 1) Primo avvio: crea le copie _orig dei DLL di sistema dal SysWOW64 DELL'UTENTE
 #    (non ridistribuiamo DLL Microsoft). I proxy winmm/opengl32 le inoltrano.
