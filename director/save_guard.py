@@ -59,8 +59,12 @@ class SaveGuard:
         for name, meta in current.items():
             if self._known.get(name) == meta:
                 continue
+            self._log("[saveguard][diag] cambio visto %s known=%r pending=%r new=%r"
+                      % (name, self._known.get(name), self._pending.get(name), meta))
             if self._pending.get(name) == meta:
-                if self._snapshot(name):
+                ok = self._snapshot(name)
+                self._log("[saveguard][diag] snapshot %s -> %s" % (name, ok))
+                if ok:
                     report["snapshotted"].append(name)
                     self._log("[saveguard] checkpoint " + name)
                 self._known[name] = meta
@@ -91,7 +95,8 @@ class SaveGuard:
         try:
             with open(src, "rb") as f:
                 data = f.read()
-        except OSError:
+        except OSError as e:
+            self._log("[saveguard][diag] read FAIL %s: %r" % (name, e))
             return False
         h = hashlib.sha1(data).hexdigest()
         if self._last_hash.get(name) == h:
