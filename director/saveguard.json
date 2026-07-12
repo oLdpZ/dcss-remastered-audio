@@ -1,0 +1,7 @@
+{
+  "enabled": true,
+  "keep": 5,
+  "poll_seconds": 1.5,
+  "require_death_token": true,
+  "restore_window_seconds": 30
+}

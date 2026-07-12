@@ -133,3 +133,27 @@ def test_restore_picks_numerically_latest_past_9999(tmp_path):
     assert g._maybe_restore("Hero") is True
     with open(os.path.join(saves, "Hero.cs"), "rb") as f:
         assert f.read() == b"newest"
+
+def test_resolve_saves_dir_env(monkeypatch, tmp_path):
+    from save_guard import resolve_saves_dir
+    monkeypatch.setenv("DCSS_SAVES_DIR", str(tmp_path / "s"))
+    assert resolve_saves_dir("/whatever/here") == str(tmp_path / "s")
+
+def test_resolve_saves_dir_dev_fallback(monkeypatch):
+    from save_guard import resolve_saves_dir
+    monkeypatch.delenv("DCSS_SAVES_DIR", raising=False)
+    here = os.path.normpath("/game/stone_soup-tiles-0.34/remaster/director")
+    got = os.path.normpath(resolve_saves_dir(here))
+    assert got == os.path.normpath("/game/stone_soup-tiles-0.34/saves")
+
+def test_load_config_defaults_when_missing(tmp_path):
+    from save_guard import load_saveguard_config, DEFAULT_CONFIG
+    cfg = load_saveguard_config(str(tmp_path))     # nessun saveguard.json
+    assert cfg == DEFAULT_CONFIG
+
+def test_load_config_merges_file(tmp_path):
+    from save_guard import load_saveguard_config
+    (tmp_path / "saveguard.json").write_text('{"keep": 3, "enabled": false}')
+    cfg = load_saveguard_config(str(tmp_path))
+    assert cfg["keep"] == 3 and cfg["enabled"] is False
+    assert cfg["poll_seconds"] == 1.5             # default preservato

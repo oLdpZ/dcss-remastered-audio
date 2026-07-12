@@ -121,3 +121,35 @@ class SaveGuard:
         shutil.copy2(latest, dst)
         self._armed_at = None                 # disarma dopo il ripristino
         return True
+
+    def run_forever(self):
+        if not self.cfg.get("enabled", True):
+            return
+        while True:
+            try:
+                self.poll_once()
+            except Exception:
+                pass
+            time.sleep(float(self.cfg.get("poll_seconds", 1.5)))
+
+
+def resolve_saves_dir(here):
+    env = os.environ.get("DCSS_SAVES_DIR")
+    if env:
+        return env
+    # Build the path relative to here, then resolve
+    result_path = os.path.join(here, "..", "..", "saves")
+    # Normalize the path; use abspath only if input was already absolute
+    if os.path.isabs(here):
+        return os.path.abspath(result_path)
+    return os.path.normpath(result_path)
+
+
+def load_saveguard_config(here):
+    cfg = dict(DEFAULT_CONFIG)
+    try:
+        with open(os.path.join(here, "saveguard.json"), encoding="utf-8") as f:
+            cfg.update(json.load(f))
+    except FileNotFoundError:
+        pass
+    return cfg
