@@ -1,4 +1,4 @@
-# DCSS Remastered — launcher one-click.
+# DCSS Remastered - launcher one-click.
 # Avvia il Director (audio+grafica), lancia il gioco, chiude il Director all'uscita.
 $ErrorActionPreference = "SilentlyContinue"
 $game   = Split-Path $PSScriptRoot          # ...\stone_soup-tiles-0.34
